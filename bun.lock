@@ -5,6 +5,7 @@
     "": {
       "name": "kuronime",
       "dependencies": {
+        "@types/node": "^25.3.0",
         "inquirer": "^13.3.0",
         "playwright": "^1.58.2",
       },

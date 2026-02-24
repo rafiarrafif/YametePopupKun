@@ -11,3 +11,8 @@ export const browser = await window.newContext({
     height: config.browser_window.height,
   },
 });
+
+export const closeBrowser = async () => {
+  await browser.close();
+  await window.close();
+};

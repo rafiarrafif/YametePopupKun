@@ -1,14 +1,18 @@
 import inquirer from "inquirer";
 import { KuronimeService } from "./kuronime.service";
+import { closeBrowser } from "../../core/browser";
+import { KuronimeRepository } from "./kuronime.repository";
 
 export class KuronimeController {
   async mainHandler() {
     const slug = await this.getSlugUrl();
-    console.log(`You entered the slug: ${slug}`);
+    const data = await new KuronimeService().scrapeAnimeData(slug);
+    await new KuronimeRepository().saveToJson(data);
+    await closeBrowser();
   }
 
   async getSlugUrl() {
-    const inputField = await inquirer.prompt([
+    const input = await inquirer.prompt([
       {
         type: "input",
         name: "slug",
@@ -24,7 +28,6 @@ export class KuronimeController {
         },
       },
     ]);
-
-    await new KuronimeService().scrapeAnimeData(inputField.slug.trim());
+    return input.slug.trim();
   }
 }
