@@ -1,0 +1,14 @@
+{
+  "browser_window": {
+    "width": 800,
+    "height": 600,
+    "headless": false
+  },
+  "platforms": [
+    {
+      "name": "Kuronime",
+      "url": "https://kuronime.moe",
+      "slug_url": "https://kuronime.moe/{slug}"
+    }
+  ]
+}
