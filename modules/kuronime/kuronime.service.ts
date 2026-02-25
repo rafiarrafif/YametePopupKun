@@ -16,6 +16,7 @@ export class KuronimeService {
   async scrapeSpecificEpisode(slug: string) {
     const targetUrl = this.referenceUrl.replace("{slug}", slug);
 
+    // Step 1: Load the episode page
     const spinnerPage = ora("Loading episode page...").start();
     const page = await browser.newPage();
     await page.goto(targetUrl);
@@ -25,6 +26,7 @@ export class KuronimeService {
       process.exit(1);
     }
 
+    // Step 2: Wait for the embed options to load
     try {
       await page.waitForSelector("#mirrorList option:not([disabled])", {
         state: "attached",
@@ -36,6 +38,7 @@ export class KuronimeService {
       throw err;
     }
 
+    // Step 3: Extract all embed URLs
     const spinnermain = ora("Extracting embed URLs...").start();
     const options = await page.$$eval(
       "#mirrorList option:not([disabled])",
@@ -51,6 +54,7 @@ export class KuronimeService {
       ? spinnermain.succeed("Embed URLs extracted.")
       : spinnermain.fail("No embed URLs found.");
 
+    // Step 4: Iterate through each embed option and extract the iframe URL
     const result: AllEmbedDatasetArray = [];
     let count = 0;
     for (const option of options) {
@@ -58,6 +62,8 @@ export class KuronimeService {
       const spinner = ora(
         `Processing mirror... (${count}/${options.length})`,
       ).start();
+
+      // Select the embed option and wait for the iframe to load
       await page.selectOption("#mirrorList", option.value, {
         force: true,
       });
@@ -67,6 +73,7 @@ export class KuronimeService {
         return iframe && iframe.src && iframe.src.startsWith("https");
       });
 
+      // Extract the iframe src URL
       const src = await page.getAttribute("iframe#iframedc", "src");
       if (src) {
         result.push({ name: option.text, value: option.value, url: src });
