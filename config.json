@@ -1,8 +1,9 @@
 {
   "browser_window": {
-    "width": 800,
-    "height": 600,
-    "headless": false
+    "width": 1280,
+    "height": 720,
+    "headless": true,
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
   },
   "platforms": [
     {

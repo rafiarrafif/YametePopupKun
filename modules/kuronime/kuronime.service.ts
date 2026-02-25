@@ -16,21 +16,29 @@ export class KuronimeService {
   async scrapeSpecificEpisode(slug: string) {
     const targetUrl = this.referenceUrl.replace("{slug}", slug);
 
+    const spinnerPage = ora("Loading episode page...").start();
     const page = await browser.newPage();
     await page.goto(targetUrl);
+    await page.mouse.move(100, 100);
+    if (page.url().includes("404")) {
+      spinnerPage.fail("Episode page not found (404).");
+      process.exit(1);
+    }
 
-    const spinnerPage = ora("Loading episode page...").start();
-    await page
-      .waitForFunction(() => {
-        const select = document.querySelector("#mirrorList");
-        return select && select.querySelectorAll("option").length > 1;
-      })
-      .then(() => spinnerPage.succeed("Episode page loaded."))
-      .catch(() => spinnerPage.fail("Failed to load episode page."));
+    try {
+      await page.waitForSelector("#mirrorList option:not([disabled])", {
+        state: "attached",
+        timeout: 60000,
+      });
+      spinnerPage.succeed("Episode page loaded.");
+    } catch (err) {
+      spinnerPage.fail("Failed to load episode page.");
+      throw err;
+    }
 
     const spinnermain = ora("Extracting embed URLs...").start();
     const options = await page.$$eval(
-      "#mirrorList option",
+      "#mirrorList option:not([disabled])",
       (opts: HTMLOptionElement[]) =>
         opts
           .filter((o: HTMLOptionElement) => !o.disabled && o.value)
