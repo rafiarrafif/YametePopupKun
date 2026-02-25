@@ -7,7 +7,7 @@ export class KuronimeController {
   async mainHandler() {
     const slug = await this.getSlugUrl();
     const data = await new KuronimeService().scrapeAnimeData(slug);
-    await new KuronimeRepository().saveToJson(data);
+    await new KuronimeRepository().saveToJson(data, slug);
     await closeBrowser();
   }
 
