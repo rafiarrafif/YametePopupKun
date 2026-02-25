@@ -1,6 +1,7 @@
 import { browser } from "../../core/browser";
 import config from "../../config.json";
 import type { AllEmbedDatasetArray } from "./kuronime.type";
+import ora from "ora";
 
 export class KuronimeService {
   constructor(
@@ -18,11 +19,16 @@ export class KuronimeService {
     const page = await browser.newPage();
     await page.goto(targetUrl);
 
-    await page.waitForFunction(() => {
-      const select = document.querySelector("#mirrorList");
-      return select && select.querySelectorAll("option").length > 1;
-    });
+    const spinnerPage = ora("Loading episode page...").start();
+    await page
+      .waitForFunction(() => {
+        const select = document.querySelector("#mirrorList");
+        return select && select.querySelectorAll("option").length > 1;
+      })
+      .then(() => spinnerPage.succeed("Episode page loaded."))
+      .catch(() => spinnerPage.fail("Failed to load episode page."));
 
+    const spinnermain = ora("Extracting embed URLs...").start();
     const options = await page.$$eval(
       "#mirrorList option",
       (opts: HTMLOptionElement[]) =>
@@ -33,9 +39,17 @@ export class KuronimeService {
             text: o.textContent?.trim() || "",
           })),
     );
+    options.length > 0
+      ? spinnermain.succeed("Embed URLs extracted.")
+      : spinnermain.fail("No embed URLs found.");
 
     const result: AllEmbedDatasetArray = [];
+    let count = 0;
     for (const option of options) {
+      count++;
+      const spinner = ora(
+        `Processing mirror... (${count}/${options.length})`,
+      ).start();
       await page.selectOption("#mirrorList", option.value, {
         force: true,
       });
@@ -49,6 +63,7 @@ export class KuronimeService {
       if (src) {
         result.push({ name: option.text, value: option.value, url: src });
       }
+      spinner.succeed(`Mirror processed: ${option.value}`);
     }
     return result;
   }
