@@ -3,21 +3,20 @@ import config from "../../config.json";
 import type { AllEmbedDatasetArray } from "./kuronime.type";
 
 export class KuronimeService {
-  async scrapeAnimeData(slug: string) {
-    const referenceUrl = config.platforms.find(
+  constructor(
+    private referenceUrl: string = config.platforms.find(
       (p) => p.name === "Kuronime",
-    )?.slug_url;
-    if (!referenceUrl) throw new Error("Kuronime URL not found in config.");
-    const targetUrl = referenceUrl.replace("{slug}", slug);
+    )?.slug_url || "",
+  ) {
+    if (!this.referenceUrl)
+      throw new Error("Kuronime URL not found in config.");
+  }
+
+  async scrapeSpecificEpisode(slug: string) {
+    const targetUrl = this.referenceUrl.replace("{slug}", slug);
 
     const page = await browser.newPage();
     await page.goto(targetUrl);
-
-    const miskinMintaMinta = page.locator(
-      "div#popup_box_donasi div.close-button",
-    );
-    await miskinMintaMinta.click();
-    await page.click("div#close-button");
 
     await page.waitForFunction(() => {
       const select = document.querySelector("#mirrorList");
@@ -52,5 +51,22 @@ export class KuronimeService {
       }
     }
     return result;
+  }
+
+  async scrapeAllEpisodeData(slug: string) {
+    const page = await browser.newPage();
+    const targetUrl = this.referenceUrl.replace("{slug}", slug);
+    await page.goto(targetUrl);
+
+    const episodeLinks = await page.$$eval(
+      "div.bxcl ul li span.lchx a",
+      (links: HTMLAnchorElement[]) =>
+        links.map((link) => ({
+          name: link.textContent.trim(),
+          url: link.href,
+        })),
+    );
+
+    console.log(episodeLinks);
   }
 }
