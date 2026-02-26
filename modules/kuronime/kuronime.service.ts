@@ -143,7 +143,7 @@ export class KuronimeService {
         }
       }
       getEachEpisodeSpinner.succeed("All episodes processed.");
-      console.table(allData);
+      return allData;
     } else {
       spinnerGetLinks.fail("No episode links found.");
       process.exit(1);

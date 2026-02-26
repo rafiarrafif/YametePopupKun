@@ -43,7 +43,10 @@ export class KuronimeController {
   async allEpisodeHandler() {
     const slug = await this.getSlugUrl("anime/one-piece");
     const data = await new KuronimeService().scrapeAllEpisodeData(slug);
-    // await new KuronimeRepository().saveToJson(data, slug);
+    await new KuronimeRepository().bulkSaveToJson(
+      data,
+      slug.replace("anime/", ""),
+    );
     await closeBrowser();
   }
 
