@@ -8,8 +8,11 @@ export class KuronimeService {
     private referenceUrl: string = config.platforms.find(
       (p) => p.name === "Kuronime",
     )?.slug_url || "",
+    private baseUrl: string = config.platforms.find(
+      (p) => p.name === "Kuronime",
+    )?.url || "",
   ) {
-    if (!this.referenceUrl)
+    if (!this.referenceUrl || !this.baseUrl)
       throw new Error("Kuronime URL not found in config.");
   }
 
@@ -84,18 +87,28 @@ export class KuronimeService {
   }
 
   async scrapeAllEpisodeData(slug: string) {
+    const spinnerGetLinks = ora("Extracting episode links...").start();
     const page = await browser.newPage();
     const targetUrl = this.referenceUrl.replace("{slug}", slug);
     await page.goto(targetUrl);
 
     const episodeLinks = await page.$$eval(
       "div.bxcl ul li span.lchx a",
-      (links: HTMLAnchorElement[]) =>
-        links.map((link) => ({
-          name: link.textContent.trim(),
-          url: link.href,
-        })),
+      (links: HTMLAnchorElement[], baseUrl: string) =>
+        links
+          .map((link) => ({
+            name: link.textContent.trim(),
+            url: link.href.replace(baseUrl, "").replace(/^\/|\/$/g, ""),
+          }))
+          .reverse(),
+      this.baseUrl,
     );
+
+    episodeLinks.length > 0
+      ? spinnerGetLinks.succeed(
+          `${episodeLinks.length} episode links extracted.`,
+        )
+      : spinnerGetLinks.fail("No episode links found.");
 
     console.log(episodeLinks);
   }

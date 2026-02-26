@@ -28,8 +28,8 @@ export class KuronimeController {
         default:
           console.log("Invalid action selected.");
       }
-    } catch {
-      console.error("An error occurred during the scraping process.");
+    } catch (error) {
+      console.error("An error occurred during the scraping process.", error);
     }
   }
 
