@@ -1,6 +1,9 @@
 import { browser } from "../../core/browser";
 import config from "../../config.json";
-import type { AllEmbedDatasetArray } from "./kuronime.type";
+import type {
+  AllEmbedDatasetArray,
+  AllEpisodeDatasetArray,
+} from "./kuronime.type";
 import ora from "ora";
 
 export class KuronimeService {
@@ -66,9 +69,9 @@ export class KuronimeService {
     let count = 0;
     for (const option of options) {
       count++;
-      const spinner = ora(
-        `Processing mirror... (${count}/${options.length})`,
-      ).start();
+      const spinner = progress
+        ? ora(`Processing mirror... (${count}/${options.length})`).start()
+        : null;
 
       // Select the embed option and wait for the iframe to load
       await page.selectOption("#mirrorList", option.value, {
@@ -85,8 +88,10 @@ export class KuronimeService {
       if (src) {
         result.push({ name: option.text, value: option.value, url: src });
       }
-      spinner.succeed(`Mirror processed: ${option.value}`);
+      spinner?.succeed(`Mirror processed: ${option.value}`);
     }
+
+    page.close();
     return result;
   }
 
@@ -114,16 +119,22 @@ export class KuronimeService {
         "Extracting embed URLs for each episode...",
       ).start();
 
+      page.close();
       let episodeCount = 0;
-      const allData: AllEmbedDatasetArray = [];
+      const allData: AllEpisodeDatasetArray = [];
       for (const episode of episodeLinks) {
+        getEachEpisodeSpinner.start(`Processing episode: ${episode.name}...`);
         episodeCount++;
         try {
           const embeds = await this.scrapeSpecificEpisode(episode.url, false);
           getEachEpisodeSpinner.succeed(
             `${episode.name} processed (${episodeCount}/${episodeLinks.length}).`,
           );
-          allData.push(...embeds);
+          allData.push({
+            number: episodeCount,
+            episode: episode.name,
+            embed: embeds,
+          });
         } catch (err) {
           getEachEpisodeSpinner.fail(
             `Failed to extract data for episode: ${episode.name}`,
