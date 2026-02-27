@@ -6,6 +6,7 @@ const window = await chromium.launch({
 });
 
 export const browser = await window.newContext({
+  userAgent: config.browser_window.user_agent,
   viewport: {
     width: config.browser_window.width,
     height: config.browser_window.height,
